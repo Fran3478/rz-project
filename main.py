@@ -1,4 +1,6 @@
 import os
+import urllib.request
+import json
 from calendar import monthrange
 from datetime import datetime
 import requests
@@ -10,16 +12,17 @@ url_list = []
 
 def url_response(url):
     path, url = url
-    r = requests.get(url, stream = True)
     with open(path, 'wb') as f:
-        for ch in r:
-            f.write(ch)
-        f.close()
-        print(path, ' - Downloaded')
+        for line in urllib.request.urlopen(url):
+            if 'CORRIENTES'.encode() in line: 
+                f.write(line)
+    f.close()
+    print(path, ' - Downloaded')
 
 now = datetime.now()
 dir = str(now.day) + str(now.month) + str(now.year) + '-' + str(now.hour) + str(now.minute)
-os.mkdir(dir)
+folders = os.path.join(dir, 'samples')
+os.makedirs(folders, exist_ok=True)
 for MONTH in MONTHS:
     year = MONTH.split('/')[1]
     month = MONTH.split('/')[0]
@@ -32,8 +35,24 @@ for MONTH in MONTHS:
             day = str(i + 1)
         full_date = adapted + day + ".txt"
         full_url = url_base + full_date
-        path = dir + '\\' + full_date
+        path = os.path.join(dir, 'samples', full_date)
         url_list.append((path, full_url))
 
 results = ThreadPool(9).imap_unordered(url_response, url_list)
 for each in results: pass
+average_list = []
+for name_file, url in url_list:
+    cont = 0
+    average = 0
+    with open(name_file, 'r') as f:
+        for row in f:
+            cont+=1
+            average = average + int(row.split()[3])
+    f.close()
+    date_file = os.path.split(name_file)[-1]
+    average_list.append((round(average/cont, 2), date_file.split('.')[0]))
+os.makedirs(dir, exist_ok=True)
+average_dir = os.path.join(dir, 'average.txt')
+with open(average_dir, 'w') as a:
+    json.dump(average_list, a)
+a.close()
