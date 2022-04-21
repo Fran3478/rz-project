@@ -29,6 +29,9 @@ folders = os.path.join(dir, "samples")
 error = False
 os.makedirs(folders, exist_ok=True)
 try:
+    if os.stat("fechas.txt").st_size == 0:
+        print('ERROR - El archivo fechas.txt esta vacio.')
+        sys.exit()
     with open("fechas.txt") as ff:
         for line in ff:
             for Month in line.split():
