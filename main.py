@@ -74,14 +74,15 @@ try:
         with open(name_file, "r") as f:
             for row in f:
                 try:
-                    (int(row.split()[3]) <= 100)
-                    cont+=1
-                    average = average + int(row.split()[3])
+                    if (int(row.split()[3]) <= 100):
+                        cont+=1
+                        average = average + int(row.split()[3])
                 except:
-                    print("Dia: ", int(row.split()[0]), " no registra valor de humedad")
+                    print("Dia: ", int(row.split()[0]), " - ", int(row.split()[1]) ,"hs, no registra valor de humedad")
         f.close()
         date_file = os.path.split(name_file)[-1]
-        average_list.append((round(average/cont, 2)))
+        if average > 0:
+            average_list.append((round(average/cont, 2)))
     os.makedirs(dir, exist_ok=True)
     average_dir = os.path.join(dir, "average.txt")
     with open(average_dir, "w") as a:
