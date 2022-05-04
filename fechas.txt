@@ -1,0 +1,3 @@
+# La fecha tiene que tener el formato DDMMYYYY
+# Pueden ser ingresadas una al lado de la otra separadas por un espacio, o una por renglon
+# Ingrese las fechas a partir del siguiente renglon

@@ -2,38 +2,47 @@ import os
 import sys
 import urllib.request
 import json
+import time
+import requests
 from calendar import monthrange
 from datetime import datetime
 from multiprocessing.pool import ThreadPool
-from clint.textui import progress
+#TODO: Covertir en .exe
 MONTHS = []
 url_base = "https://ssl.smn.gob.ar/dpd/descarga_opendata.php?file=observaciones/datohorario"
 url_list = []
 
+def testconecction():
+    try:
+        request = requests.get("http://www.google.com", timeout=5)
+    except (requests.ConnectionError, requests.Timeout):
+        print("ERROR - No se pudo realizar la coneccion a internet")
+        close()
+def close():
+    input("Presione enter para salir...")
+    sys.exit()
+
 def url_response(url):
     path, url = url
-    try:
-        with open(path, "wb") as p:
-            for line in urllib.request.urlopen(url):
-                if "CORRIENTES".encode() in line: 
-                    p.write(line)
-        p.close()
-        print(path, " - Downloaded")
-    except:
-        print("ERROR - Falla en la conexion con el servidor")
-        sys.exit()
+    with open(path, "wb") as p:
+        for line in urllib.request.urlopen(url):
+            if "CORRIENTES".encode() in line: 
+                p.write(line)
+    p.close()
+    print(path, " - Downloaded")
 
 now = datetime.now()
 dir = str(now.day) + str(now.month) + str(now.year) + "-" + str(now.hour) + str(now.minute)
 folders = os.path.join(dir, "samples")
-error = False
 try:
     if os.stat("fechas.txt").st_size == 0:
         print('ERROR - El archivo fechas.txt esta vacio.')
-        sys.exit()
+        close()
     os.makedirs(folders, exist_ok=True)
     with open("fechas.txt") as ff:
         for line in ff:
+            if ("#" in line):
+                 continue
             for Month in line.split():
                 MONTHS.append(Month)
         for MONTH in MONTHS:
@@ -41,15 +50,19 @@ try:
                 if (len(MONTH) != 8):
                     raise Exception()
             except:
-                error = True
-                print("ERROR - Las fechas debe tener una estructura de 8 caracteres: DDMMAAAA y estar separadas por 1 espacio")
-                sys.exit()
+                print("ERROR - Las fechas debe tener una estructura de 8 caracteres: DDMMAAAA y estar separadas por 1 espacio o en la siguiente linea")
+                close()
             try: 
                 int(MONTH)
             except:
-                error = True
                 print("ERROR - La lista de fechas debe estar conformada solo por numeros")
-                sys.exit()
+                close()
+            try:
+                format = '%d%m%Y'
+                datetime.strptime(MONTH,format)
+            except ValueError:
+                print("ERROR - La fecha ", MONTH, " tiene un formato invalido")
+                close()
             year = MONTH[4:]
             month = MONTH[2:4]
             adapted = year + month
@@ -64,7 +77,8 @@ try:
                 path = os.path.join(dir, "samples", full_date)
                 if ((path, full_url) not in url_list):
                     url_list.append((path, full_url))
-
+            
+    testconecction()
     results = ThreadPool(9).imap_unordered(url_response, url_list)
     for each in results: pass
     average_list = []
@@ -107,10 +121,12 @@ try:
     except:
         print(" FAIL")
         print("ERROR - No se encuentra el archivo data.dat")
-
-    sys.exit()    
+        close()
+    close()    
 except FileNotFoundError:
     print("ERROR - No se encontro el archivo fechas.txt")
     print("Verifique que este mismo se encuentre en la carpeta raiz del programa y que su nombre este correctamente")
+    close()
 else:
     print('Ocurrio un ERROR inesperado')
+    close()
