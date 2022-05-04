@@ -1,0 +1,61 @@
+#include <DHT.h>
+#include <DHT_U.h>
+#define DHTPIN 12
+#define DHTTYPE DHT11
+//Debe incluir las librerias: "Adafruit Unified Sensor" y "DHT sensor library" ambas de Adafruit
+
+DHT dht(DHTPIN, DHTTYPE);
+int bluehistorico = 11;
+int redhistorico = 10;
+int greenhistorico = 9;
+int blueactual = 6;
+int redactual = 5;
+int greenactual = 3;
+int cont = 60;
+byte i = 0;
+double data [] = 
+
+void setup() {
+  Serial.begin(9600);
+  dht.begin();
+  pinMode(redhistorico, OUTPUT);
+  pinMode(bluehistorico, OUTPUT);
+  pinMode(greenhistorico, OUTPUT);
+  pinMode(redactual, OUTPUT);
+  pinMode(blueactual, OUTPUT);
+  pinMode(greenactual, OUTPUT);
+}
+
+void loop() {
+  
+  if (cont % 60 == 0) {
+    cont = 0;
+    if (i <= (sizeof(data) / sizeof(data[0]))) {
+      int red = map(data[i], 0, 100, 0, 128);
+      int blue = 128 - red;
+      int green = 0;
+      i += 1;
+      analogWrite (blueactual, blue);
+      analogWrite (redactual, red);
+      analogWrite (greenactual, green);
+    }
+  }
+  
+  delay(2000);
+  cont += 2;
+  float humidity = dht.readHumidity();
+
+  //Control de fallo al tomar medidas
+  if (isnan(humidity)) {
+    Serial.println("Failed to read from DHT sensor!");
+    return;
+  }
+
+  int red = map(humidity, 0, 100, 0, 128);
+  int blue = 128 - red;
+  int green = 0;
+  analogWrite (bluehistorico, blue);
+  analogWrite (redhistorico, red);
+  analogWrite (greenhistorico, green);
+
+}
